@@ -31,9 +31,7 @@ const Home = props => {
     );
   };
 
-  const TeamRow = ({ team, isSelected, onSelected }) => {
-    const [checked, setChecked] = useState(false);
-    const handleChecked = e => {
+  const TeamRow = ({ team, isChecked, handleSelect }) => {
     return (
       <li key={team.name}>
         {team.name}
@@ -43,25 +41,33 @@ const Home = props => {
           <div>This is {team.name}</div>
         </DialogWithTrigger>
         <Checkbox
-          checked={checked}
-          onChange={handleChecked}
+          checked={isChecked}
+          onChange={() => handleSelect(!isChecked)}
           value={team.name}
         />
       </li>
     );
   };
 
-  const addTeam = teamId => {
-    setSelectedTeams([...selectedTeams, teamId]);
+  const addTeam = (teamId, teamName) => {
+    setSelectedTeams([...selectedTeams, { id: teamId, name: teamName }]);
   };
 
   const removeTeam = teamId => {
-    const newTeamList = selectedTeams.filter(id => id !== teamId);
+    const newTeamList = selectedTeams.filter(team => team.id !== teamId);
     setSelectedTeams(newTeamList);
   };
 
-  const SideBar = () =>
-    selectedTeams.map(team => <li key={team.id}>{team.name}</li>);
+  const SideBar = () => (
+    <div>
+      Selected Teams
+      <ul>
+        {selectedTeams.map(team => (
+          <li key={team.id}>{team.name}</li>
+        ))}
+      </ul>
+    </div>
+  );
 
   return (
     <div>
@@ -74,9 +80,12 @@ const Home = props => {
             {teams.map(team => (
               <TeamRow
                 team={team}
-                onSelected={isSelected => {
-                  isSelected ? addTeam(team.id) : removeTeam(team.id);
-                }}
+                isChecked={selectedTeams.find(
+                  selectTeam => selectTeam.id === team.id
+                )}
+                handleSelect={isSelected =>
+                  isSelected ? addTeam(team.id, team.name) : removeTeam(team.id)
+                }
               />
             ))}
           </ul>
