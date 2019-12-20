@@ -1,4 +1,5 @@
 import useStateApi from './useStateApi'
+// import createStore from './createStore'
 
 const teamSelectionApi = ({state, setState}) => {
   const addTeam = (team) => {
@@ -21,8 +22,9 @@ const teamSelectionApi = ({state, setState}) => {
   }
 }
 
-const useTeamSelection = () => {
-  return useStateApi(teamSelectionApi, [])
-}
+const useTeamSelection = () => useStateApi(teamSelectionApi, [])
+
+// If we wanted team selection to be global state we could create a store instead
+// const [TeamSelectionProvider, useTeamSelection] = createStore(teamSelectionApi, []);
 
 export default useTeamSelection

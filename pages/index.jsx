@@ -7,7 +7,7 @@ import List from '@material-ui/core/List';
 
 const Home = props => {
 
-  // Handles api errors
+  // Handles api errors via snackbars
   const api = usePigeonApi()
   
   // Handles state for team selection
