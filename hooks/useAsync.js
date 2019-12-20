@@ -1,23 +1,23 @@
 import { useState, useRef } from 'react'
 
-const useAsync = (fn, { initialPending = false } = {}) => {
+export const BEFORE = 'before'
+export const PENDING = 'pending'
+export const FULFILLED = 'fulfilled'
+export const REJECTED = 'rejected'
+
+const useAsync = (fn) => {
   let currentPromise = useRef(null)
   const [state, setState] = useState({
-    pending: initialPending,
-    fulfilled: false,
-    rejected: false,
+    status: BEFORE,
     result: undefined,
   })
 
   return [
     state,
     async function() {
-      setState(prevState => ({
-        ...prevState,
-        pending: true,
-        fulfilled: false,
-        rejected: false,
-        result: undefined,
+      setState(prev => ({
+        ...prev,
+        status: PENDING,
       }))
       let prom = fn(...arguments)
       currentPromise.current = prom
@@ -26,22 +26,18 @@ const useAsync = (fn, { initialPending = false } = {}) => {
         if (prom !== currentPromise.current) {
           return
         }
-        setState(prevState => ({
-          ...prevState,
-          pending: false,
-          fulfilled: true,
+        setState({
+          status: FULFILLED,
           result: result,
-        }))
+        })
       } catch (e) {
         if (prom !== currentPromise.current) {
           return
         }
-        setState(prevState => ({
-          ...prevState,
-          pending: false,
-          rejected: true,
+        setState({
+          status: REJECTED,
           result: e,
-        }))
+        })
       }
       return prom
     },
