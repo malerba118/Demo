@@ -7,7 +7,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 
 const TeamRow = ({ team, isChecked, onSelect }) => {
   return (
-    <ListItem key={team.id}>
+    <ListItem>
       <ListItemText>{team.name}</ListItemText>
       <ListItemSecondaryAction>
         <DialogWithTrigger

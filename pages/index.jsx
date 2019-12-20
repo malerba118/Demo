@@ -50,6 +50,7 @@ const Home = props => {
               <List>
                 {request.result.teams.map(team => (
                   <TeamRow
+                    key={team.id}
                     team={team}
                     isChecked={isSelected(team)}
                     onSelect={e =>
