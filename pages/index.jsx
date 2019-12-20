@@ -1,112 +1,75 @@
 import { useEffect, useState, useContext } from "react";
-import api from "../services/api";
-import { useDialog } from "../hooks";
+import useAsync, { PENDING, FULFILLED } from '../hooks/useAsync'
 import UserContext from "../UserContext";
-
-import Dialog from "@material-ui/core/Dialog";
-import Checkbox from "@material-ui/core/Checkbox";
-import Button from "@material-ui/core/Button";
+import { SideBar, TeamRow, AsyncButton } from '../components'
+import { useTeamSelection, usePigeonApi } from "../hooks";
+import List from '@material-ui/core/List';
 
 const Home = props => {
-  const [teams, setTeams] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedTeams, setSelectedTeams] = useState([]);
+
+  // Handles api errors
+  const api = usePigeonApi()
+  
+  // Handles state for team selection
+  const { 
+    selectedTeams, 
+    isSelected, 
+    addTeam, 
+    removeTeam 
+  } = useTeamSelection()
+
   const [page, setPage] = useState(0);
+
+  // Handles state through the promise lifecycle
+  const [request, getTeams] = useAsync(api.getTeams)
+
+  // Grab user info from anhywhere
   const { signedIn, userName } = useContext(UserContext);
 
-  // Fetch data, set state
+  // Refetch data on page change
   useEffect(() => {
-    setLoading(true);
-    api.getTeams({ page }).then(res => {
-      setTeams(res.data);
-      setLoading(false);
-    });
+    getTeams({ page })
   }, [page]);
 
-  // Display teams
-  const TeamRow = ({ team, isChecked, handleSelect }) => {
-    return (
-      <li key={team.name}>
-        {team.name}
-        <DialogWithTrigger
-          trigger={dialog => <Button onClick={dialog.open}>Team Info</Button>}
-        >
-          <div>This is {team.name}</div>
-        </DialogWithTrigger>
-        <Checkbox
-          checked={isChecked}
-          onChange={() => handleSelect(!isChecked)}
-          value={team.name}
-        />
-      </li>
-    );
-  };
-
-  // Add / Remove Team
-  const addTeam = (teamId, teamName) => {
-    setSelectedTeams([...selectedTeams, { id: teamId, name: teamName }]);
-  };
-
-  const removeTeam = teamId => {
-    const newTeamList = selectedTeams.filter(team => team.id !== teamId);
-    setSelectedTeams(newTeamList);
-  };
-
-  // Modal
-  const DialogWithTrigger = ({ trigger, children }) => {
-    const dialog = useDialog(false);
-    return (
-      <>
-        {trigger(dialog)}
-        <Dialog open={dialog.isOpen} onClose={dialog.close}>
-          {children}
-        </Dialog>
-      </>
-    );
-  };
-
-  // Selected Teams Sidebar
-  const SideBar = () => (
-    <div>
-      Selected Teams
-      <ul>
-        {selectedTeams.map(team => (
-          <li key={team.id}>{team.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
-
   return (
-    <div>
-      <h1>Team Selection</h1>
-      <p>{signedIn ? `Welcome ${userName}!` : "Status - Signed Out"}</p>
-      <div style={{ display: "flex" }}>
+    <div style={layoutStyles}>
+      <div style={toolbarStyles}>
+        <h1>Team Selection</h1>
+        <p>{signedIn ? `Welcome ${userName}!` : "Status - Signed Out"}</p>
+      </div>
+      <div style={contentStyles}>
         <div style={sidebarStyles}>
-          <SideBar />
+          <SideBar teams={selectedTeams} />
         </div>
-        <div style={teamListStyles}>
-          {loading && <p>loading...</p>}
-          {!loading && (
-            <ul>
-              {teams.map(team => (
-                <TeamRow
-                  team={team}
-                  isChecked={selectedTeams.find(
-                    selectTeam => selectTeam.id === team.id
-                  )}
-                  handleSelect={isSelected =>
-                    isSelected
-                      ? addTeam(team.id, team.name)
-                      : removeTeam(team.id)
-                  }
-                />
-              ))}
-            </ul>
-          )}
+        <div style={mainStyles}>
+          <div style={mainTopStyles}>
+            {request.status === PENDING && (
+              <p style={loaderStyles}>loading...</p>
+            )}
+            {request.status === FULFILLED && (
+              <List>
+                {request.result.teams.map(team => (
+                  <TeamRow
+                    key={team.id}
+                    team={team}
+                    isChecked={isSelected(team)}
+                    onSelect={e =>
+                      e.target.checked
+                        ? addTeam(team)
+                        : removeTeam(team)
+                    }
+                  />
+                ))}
+              </List>
+            )}
+          </div>
           <div style={pageButtonStyles}>
-            <Button onClick={() => setPage(p => p - 1)}>Prev Page</Button>
-            <Button onClick={() => setPage(p => p + 1)}>Next Page</Button>
+            <AsyncButton 
+              pending={request.status === PENDING} 
+              onClick={() => setPage(p => p + 1)}
+            >
+              Next Page
+            </AsyncButton>
           </div>
         </div>
       </div>
@@ -114,20 +77,56 @@ const Home = props => {
   );
 };
 
+const layoutStyles = {
+  height: 400,
+  width: 600,
+  display: 'flex',
+  flexDirection: 'column'
+}
+
+const toolbarStyles = {
+  height: 100,
+}
+
 const sidebarStyles = {
   borderRight: "solid 2px gray",
-  padding: "15px"
+  padding: "15px",
+  flex: 1,
+  minWidth: 200
 };
 
-const teamListStyles = {
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "center"
+const mainStyles = {
+  position: 'relative',
+  flex: 9999,
+  display: 'flex',
+  flexDirection: 'column'
 };
+
+const mainTopStyles = {
+  height: '90%'
+};
+
+const contentStyles = {
+  flex: 1,
+  display: 'flex',
+};
+
+const loaderStyles = {
+  position: 'absolute',
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
+}
 
 const pageButtonStyles = {
-  display: "flex",
-  justifyContent: "center"
+  flex: 1,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
 };
 
 export default Home;
