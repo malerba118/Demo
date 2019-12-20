@@ -11,6 +11,7 @@ const Home = props => {
   const [page, setPage] = useState(0);
   const [selectedTeams, setSelectedTeams] = useState([]);
 
+  // Fetch data, set state
   useEffect(() => {
     setLoading(true);
     api.getTeams({ page }).then(res => {
@@ -19,18 +20,7 @@ const Home = props => {
     });
   }, [page]);
 
-  const DialogWithTrigger = ({ trigger, children }) => {
-    const dialog = useDialog(false);
-    return (
-      <>
-        {trigger(dialog)}
-        <Dialog open={dialog.isOpen} onClose={dialog.close}>
-          {children}
-        </Dialog>
-      </>
-    );
-  };
-
+  // Display teams
   const TeamRow = ({ team, isChecked, handleSelect }) => {
     return (
       <li key={team.name}>
@@ -49,6 +39,7 @@ const Home = props => {
     );
   };
 
+  // Add / Remove Team
   const addTeam = (teamId, teamName) => {
     setSelectedTeams([...selectedTeams, { id: teamId, name: teamName }]);
   };
@@ -58,6 +49,20 @@ const Home = props => {
     setSelectedTeams(newTeamList);
   };
 
+  // Modal
+  const DialogWithTrigger = ({ trigger, children }) => {
+    const dialog = useDialog(false);
+    return (
+      <>
+        {trigger(dialog)}
+        <Dialog open={dialog.isOpen} onClose={dialog.close}>
+          {children}
+        </Dialog>
+      </>
+    );
+  };
+
+  // Selected Teams Sidebar
   const SideBar = () => (
     <div>
       Selected Teams
@@ -71,31 +76,54 @@ const Home = props => {
 
   return (
     <div>
-      <Button onClick={() => setPage(p => p - 1)}>Prev Page</Button>
-      <Button onClick={() => setPage(p => p + 1)}>Next Page</Button>
-      {loading && <div>loading...</div>}
-      <div>
-        {!loading && (
-          <ul>
-            {teams.map(team => (
-              <TeamRow
-                team={team}
-                isChecked={selectedTeams.find(
-                  selectTeam => selectTeam.id === team.id
-                )}
-                handleSelect={isSelected =>
-                  isSelected ? addTeam(team.id, team.name) : removeTeam(team.id)
-                }
-              />
-            ))}
-          </ul>
-        )}
-      </div>
-      <div>
-        <SideBar />
+      <h1>Team Selection</h1>
+      <div style={{ display: "flex" }}>
+        <div style={sidebarStyles}>
+          <SideBar />
+        </div>
+        <div style={teamListStyles}>
+          {loading && <p>loading...</p>}
+          {!loading && (
+            <ul>
+              {teams.map(team => (
+                <TeamRow
+                  team={team}
+                  isChecked={selectedTeams.find(
+                    selectTeam => selectTeam.id === team.id
+                  )}
+                  handleSelect={isSelected =>
+                    isSelected
+                      ? addTeam(team.id, team.name)
+                      : removeTeam(team.id)
+                  }
+                />
+              ))}
+            </ul>
+          )}
+          <div style={pageButtonStyles}>
+            <Button onClick={() => setPage(p => p - 1)}>Prev Page</Button>
+            <Button onClick={() => setPage(p => p + 1)}>Next Page</Button>
+          </div>
+        </div>
       </div>
     </div>
   );
+};
+
+const sidebarStyles = {
+  borderRight: "solid 2px gray",
+  padding: "15px"
+};
+
+const teamListStyles = {
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center"
+};
+
+const pageButtonStyles = {
+  display: "flex",
+  justifyContent: "center"
 };
 
 export default Home;
