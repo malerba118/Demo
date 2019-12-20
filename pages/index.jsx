@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import api from "../services/api";
 import { useDialog } from "../hooks";
+import UserContext from "../UserContext";
+
 import Dialog from "@material-ui/core/Dialog";
 import Checkbox from "@material-ui/core/Checkbox";
 import Button from "@material-ui/core/Button";
@@ -8,8 +10,9 @@ import Button from "@material-ui/core/Button";
 const Home = props => {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(0);
   const [selectedTeams, setSelectedTeams] = useState([]);
+  const [page, setPage] = useState(0);
+  const { signedIn, userName } = useContext(UserContext);
 
   // Fetch data, set state
   useEffect(() => {
@@ -77,6 +80,7 @@ const Home = props => {
   return (
     <div>
       <h1>Team Selection</h1>
+      <p>{signedIn ? `Welcome ${userName}!` : "Status - Signed Out"}</p>
       <div style={{ display: "flex" }}>
         <div style={sidebarStyles}>
           <SideBar />
